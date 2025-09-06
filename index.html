@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>现代待办事项列表 | To-Do List</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 自定义配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5', // 紫色为主色调
+                        secondary: '#7C3AED', // 辅助色
+                        neutral: '#1F2937', // 中性色
+                        "neutral-light": '#F3F4F6',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                },
+            }
+        }
+    </script>
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .task-completed {
+                @apply line-through text-gray-500 opacity-70;
+            }
+            .card-hover {
+                @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+            }
+            .input-focus {
+                @apply focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans text-neutral">
+    <!-- 顶部导航栏 -->
+    <nav class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-check-circle text-primary text-2xl"></i>
+                <h1 class="text-xl font-bold text-neutral">TaskMaster<span class="text-primary">.pro</span></h1>
+            </div>
+            <div class="hidden md:flex space-x-6">
+                <button id="calendar-view-btn" class="text-gray-600 hover:text-primary transition-colors duration-200">
+                    <i class="fa fa-calendar mr-1"></i> 日历视图
+                </button>
+                <button class="text-gray-600 hover:text-primary transition-colors duration-200">
+                    <i class="fa fa-bar-chart mr-1"></i> 统计
+                </button>
+                <button class="text-gray-600 hover:text-primary transition-colors duration-200">
+                    <i class="fa fa-cog mr-1"></i> 设置
+                </button>
+            </div>
+            <button class="md:hidden text-gray-600 hover:text-primary transition-colors duration-200">
+                <i class="fa fa-bars text-xl"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 主要内容区域 -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- 欢迎区域 -->
+        <section class="mb-10">
+            <div class="bg-gradient-to-br from-primary/90 to-secondary rounded-xl shadow-lg p-6 md:p-8 text-white relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                <div class="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+                
+                <div class="relative z-10">
+                    <h2 class="text-2xl md:text-3xl font-bold mb-2">欢迎回来！</h2>
+                    <p class="opacity-90 mb-6">今天是 <span id="current-date" class="font-medium"></span>，您有 <span id="pending-tasks-count" class="font-medium">0</span> 项待办任务</p>
+                    
+                    <!-- 添加任务表单 -->
+                    <form id="add-task-form" class="flex flex-col sm:flex-row gap-3">
+                        <input
+                            type="text"
+                            id="new-task-input"
+                            placeholder="添加新任务..."
+                            class="flex-1 px-4 py-3 rounded-lg text-neutral input-focus outline-none"
+                            required
+                        />
+                        <select
+                            id="task-priority"
+                            class="px-4 py-3 rounded-lg bg-white/20 text-white border border-white/30 input-focus outline-none"
+                        >
+                            <option value="low">低优先级</option>
+                            <option value="medium" selected>中优先级</option>
+                            <option value="high">高优先级</option>
+                        </select>
+                        <button
+                            type="submit"
+                            class="px-6 py-3 bg-white text-primary font-medium rounded-lg hover:bg-opacity-90 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                        >
+                            <i class="fa fa-plus"></i>
+                            <span>添加任务</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- 任务过滤器 -->
+        <section class="mb-6">
+            <div class="bg-white rounded-xl shadow-sm p-4 flex flex-wrap items-center gap-3">
+                <div class="flex-grow">
+                    <h3 class="font-medium text-gray-600 mb-2">任务过滤</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <button class="filter-btn px-4 py-1.5 rounded-full bg-primary text-white text-sm" data-filter="all">
+                            全部任务
+                        </button>
+                        <button class="filter-btn px-4 py-1.5 rounded-full bg-neutral-light text-gray-600 text-sm hover:bg-gray-200 transition-colors" data-filter="pending">
+                            待办任务
+                        </button>
+                        <button class="filter-btn px-4 py-1.5 rounded-full bg-neutral-light text-gray-600 text-sm hover:bg-gray-200 transition-colors" data-filter="completed">
+                            已完成任务
+                        </button>
+                        <button class="filter-btn px-4 py-1.5 rounded-full bg-neutral-light text-gray-600 text-sm hover:bg-gray-200 transition-colors" data-filter="high">
+                            高优先级
+                        </button>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <label for="search-tasks" class="text-sm text-gray-500 hidden md:block">搜索任务：</label>
+                    <div class="relative">
+                        <input
+                            type="text"
+                            id="search-tasks"
+                            placeholder="搜索任务..."
+                            class="pl-10 pr-4 py-2 rounded-lg border border-gray-200 input-focus outline-none text-sm w-full md:w-48"
+                        />
+                        <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 视图切换 -->
+        <div class="flex items-center justify-center mb-6">
+            <div class="inline-flex p-1 bg-neutral-light rounded-lg">
+                <button id="list-view-btn" class="px-4 py-2 rounded-md bg-white shadow-sm text-primary font-medium">
+                    <i class="fa fa-list mr-1"></i> 列表视图
+                </button>
+                <button id="calendar-view-btn-secondary" class="px-4 py-2 rounded-md text-gray-600 hover:bg-white/50 transition-colors">
+                    <i class="fa fa-calendar mr-1"></i> 日历视图
+                </button>
+            </div>
+        </div>
+
+        <!-- 列表视图 -->
+        <section id="list-view" class="mb-6">
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="font-medium">我的任务</h3>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-gray-500">排序：</span>
+                        <select
+                            id="task-sort"
+                            class="text-sm border-none bg-transparent focus:ring-0"
+                        >
+                            <option value="date-desc">最新添加</option>
+                            <option value="date-asc">最早添加</option>
+                            <option value="priority">按优先级</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- 任务列表容器 -->
+                <div id="tasks-container" class="divide-y divide-gray-100">
+                    <!-- 空状态提示 -->
+                    <div id="empty-state" class="p-10 text-center">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-neutral-light rounded-full mb-4">
+                            <i class="fa fa-tasks text-2xl text-gray-400"></i>
+                        </div>
+                        <h4 class="text-lg font-medium text-gray-700 mb-1">还没有任务</h4>
+                        <p class="text-gray-500 mb-4">添加您的第一个任务，开始提高工作效率吧！</p>
+                        <button id="quick-add-btn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                            <i class="fa fa-plus mr-1"></i> 快速添加
+                        </button>
+                    </div>
+                    
+                    <!-- 任务项将通过JavaScript动态添加 -->
+                </div>
+                
+                <!-- 底部操作栏 -->
+                <div id="tasks-footer" class="p-4 border-t border-gray-100 flex justify-between items-center hidden">
+                    <span class="text-sm text-gray-500">共 <span id="total-tasks-count">0</span> 项任务</span>
+                    <button id="clear-completed-btn" class="text-sm text-red-500 hover:text-red-600 transition-colors">
+                        <i class="fa fa-trash-o mr-1"></i> 清除已完成任务
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 日历视图 -->
+        <section id="calendar-view" class="mb-6 hidden">
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <!-- 日历头部 -->
+                <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                    <button id="prev-month" class="p-2 rounded-full hover:bg-neutral-light transition-colors">
+                        <i class="fa fa-chevron-left text-gray-600"></i>
+                    </button>
+                    <h3 id="current-month" class="font-medium text-lg"></h3>
+                    <button id="next-month" class="p-2 rounded-full hover:bg-neutral-light transition-colors">
+                        <i class="fa fa-chevron-right text-gray-600"></i>
+                    </button>
+                </div>
+                
+                <!-- 日历主体 -->
+                <div class="p-4">
+                    <!-- 星期标题 -->
+                    <div class="grid grid-cols-7 mb-2 whitespace-nowrap">
+                        <div class="text-center text-sm font-medium text-gray-500 py-1 h-8 flex items-center justify-center">日</div>
+                        <div class="text-center text-sm font-medium text-gray-500 py-1 h-8 flex items-center justify-center">一</div>
+                        <div class="text-center text-sm font-medium text-gray-500 py-1 h-8 flex items-center justify-center">二</div>
+                        <div class="text-center text-sm font-medium text-gray-500 py-1 h-8 flex items-center justify-center">三</div>
+                        <div class="text-center text-sm font-medium text-gray-500 py-1 h-8 flex items-center justify-center">四</div>
+                        <div class="text-center text-sm font-medium text-gray-500 py-1 h-8 flex items-center justify-center">五</div>
+                        <div class="text-center text-sm font-medium text-gray-500 py-1 h-8 flex items-center justify-center">六</div>
+                    </div>
+                    
+                    <!-- 日历格子 -->
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-1">
+                        <!-- 日历格子将通过JavaScript动态添加 -->
+                    </div>
+                </div>
+                
+                <!-- 日历底部操作 -->
+                <div class="p-4 border-t border-gray-100">
+                    <h4 class="font-medium mb-2">今日任务</h4>
+                    <div id="today-tasks" class="space-y-2">
+                        <!-- 今日任务将通过JavaScript动态添加 -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-white border-t border-gray-200 mt-10 py-6">
+        <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+            <p>© 2023 TaskMaster.pro - 现代待办事项管理应用</p>
+            <p class="mt-2">让工作和生活更加高效有序</p>
+        </div>
+    </footer>
+
+    <!-- 编辑任务模态框 -->
+    <div id="edit-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4 transform transition-all duration-300 scale-95 opacity-0" id="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">编辑任务</h3>
+                <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <form id="edit-task-form">
+                <input
+                    type="hidden"
+                    id="edit-task-id"
+                />
+                <div class="mb-4">
+                    <label for="edit-task-input" class="block text-sm font-medium text-gray-700 mb-1">任务内容</label>
+                    <input
+                        type="text"
+                        id="edit-task-input"
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 input-focus outline-none"
+                        required
+                    />
+                </div>
+                <div class="mb-4">
+                    <label for="edit-task-priority" class="block text-sm font-medium text-gray-700 mb-1">优先级</label>
+                    <select
+                        id="edit-task-priority"
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 input-focus outline-none"
+                    >
+                        <option value="low">低优先级</option>
+                        <option value="medium">中优先级</option>
+                        <option value="high">高优先级</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button
+                        type="button"
+                        id="cancel-edit-btn"
+                        class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                        取消
+                    </button>
+                    <button
+                        type="submit"
+                        class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                    >
+                        保存修改
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>
