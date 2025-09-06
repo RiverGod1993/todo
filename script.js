@@ -22,7 +22,6 @@ const listView = document.getElementById('list-view');
 const calendarView = document.getElementById('calendar-view');
 const statisticsView = document.getElementById('statistics-view');
 const listViewBtn = document.getElementById('list-view-btn');
-const calendarViewBtn = document.getElementById('calendar-view-btn');
 const calendarViewBtnSecondary = document.getElementById('calendar-view-btn-secondary');
 const statisticsBtn = document.getElementById('statistics-btn');
 
@@ -49,7 +48,7 @@ let tasks = [];
 let currentFilter = 'all';
 let currentSearchTerm = '';
 let currentSortBy = 'date-desc';
-let currentView = 'calendar'; // 'list' 或 'calendar'
+let currentView = 'list'; // 'list' 或 'calendar'
 let currentCalendarDate = new Date();
 
 // 初始化应用
@@ -111,13 +110,11 @@ function initApp() {
     // 添加事件监听器
     addEventListeners();
     
-    // 手动设置日历视图按钮的激活状态
-    calendarViewBtn.classList.add('text-primary', 'font-medium');
-    calendarViewBtn.classList.remove('text-gray-600');
-    calendarViewBtnSecondary.classList.add('text-primary', 'font-medium');
-    calendarViewBtnSecondary.classList.remove('text-gray-600');
-    listViewBtn.classList.add('text-gray-600');
-    listViewBtn.classList.remove('text-primary', 'font-medium');
+    // 手动设置列表视图按钮的激活状态
+    listViewBtn.classList.add('text-primary', 'font-medium');
+    listViewBtn.classList.remove('text-gray-600');
+    calendarViewBtnSecondary.classList.add('text-gray-600');
+    calendarViewBtnSecondary.classList.remove('text-primary', 'font-medium');
     
     // 渲染当前视图
     renderCurrentView();
@@ -129,6 +126,7 @@ function loadTasks() {
     if (storedTasks) {
         tasks = JSON.parse(storedTasks);
     }
+    return tasks;
 }
 
 // 保存任务到localStorage
@@ -205,7 +203,6 @@ function addEventListeners() {
     
     // 视图切换按钮
     listViewBtn.addEventListener('click', () => switchView('list'));
-    calendarViewBtn.addEventListener('click', () => switchView('calendar'));
     calendarViewBtnSecondary.addEventListener('click', () => switchView('calendar'));
     statisticsBtn.addEventListener('click', () => switchView('statistics'));
     
@@ -255,8 +252,6 @@ function switchView(view) {
     if (view === 'list') {
         listViewBtn.classList.add('text-primary', 'font-medium');
         listViewBtn.classList.remove('text-gray-600');
-        calendarViewBtn.classList.add('text-gray-600');
-        calendarViewBtn.classList.remove('text-primary', 'font-medium');
         calendarViewBtnSecondary.classList.add('text-gray-600');
         calendarViewBtnSecondary.classList.remove('text-primary', 'font-medium');
         statisticsBtn.classList.add('text-gray-600');
@@ -271,8 +266,6 @@ function switchView(view) {
         document.getElementById('task-filters').classList.remove('hidden');
         document.getElementById('task-sort-container').classList.remove('hidden');
     } else if (view === 'calendar') {
-        calendarViewBtn.classList.add('text-primary', 'font-medium');
-        calendarViewBtn.classList.remove('text-gray-600');
         calendarViewBtnSecondary.classList.add('text-primary', 'font-medium');
         calendarViewBtnSecondary.classList.remove('text-gray-600');
         listViewBtn.classList.add('text-gray-600');
@@ -286,18 +279,25 @@ function switchView(view) {
         statisticsView.classList.add('hidden');
         
         // 隐藏任务过滤器和排序
-        document.getElementById('task-filters').classlist.add('hidden');
-        document.getElementById('task-sort-container').classlist.add('hidden');
+        document.getElementById('task-filters').classList.add('hidden');
+        document.getElementById('task-sort-container').classList.add('hidden');
         
         // 渲染日历
         renderCalendar();
+        
+        // 显示当前日期的任务
+        const today = new Date();
+        const todayDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const todayTasks = tasks.filter(task => {
+            const taskDate = task.dueDate ? new Date(task.dueDate) : new Date(task.createdAt);
+            return taskDate.toDateString() === today.toDateString();
+        });
+        showDayTasks(todayDateStr, today.getDate(), todayTasks);
     } else if (view === 'statistics') {
         statisticsBtn.classList.add('text-primary', 'font-medium');
         statisticsBtn.classList.remove('text-gray-600');
         listViewBtn.classList.add('text-gray-600');
         listViewBtn.classList.remove('text-primary', 'font-medium');
-        calendarViewBtn.classList.add('text-gray-600');
-        calendarViewBtn.classList.remove('text-primary', 'font-medium');
         calendarViewBtnSecondary.classList.add('text-gray-600');
         calendarViewBtnSecondary.classList.remove('text-primary', 'font-medium');
         
@@ -307,10 +307,11 @@ function switchView(view) {
         calendarView.classList.add('hidden');
         
         // 隐藏任务过滤器和排序
-        document.getElementById('task-filters').classlist.add('hidden');
-        document.getElementById('task-sort-container').classlist.add('hidden');
+        document.getElementById('task-filters').classList.add('hidden');
+        document.getElementById('task-sort-container').classList.add('hidden');
         
         // 渲染统计
+        console.log('切换到统计视图，调用renderStatistics');
         renderStatistics();
     }
 }
@@ -672,6 +673,26 @@ function renderCalendar() {
             return taskDate.toDateString() === today.toDateString();
         });
         showDayTasks(todayDateStr, today.getDate(), todayTasks);
+    } else if (view === 'statistics') {
+        statisticsBtn.classList.add('text-primary', 'font-medium');
+        statisticsBtn.classList.remove('text-gray-600');
+        listViewBtn.classList.add('text-gray-600');
+        listViewBtn.classList.remove('text-primary', 'font-medium');
+        calendarViewBtnSecondary.classList.add('text-gray-600');
+        calendarViewBtnSecondary.classList.remove('text-primary', 'font-medium');
+        
+        // 显示统计视图，隐藏其他视图
+        statisticsView.classList.remove('hidden');
+        listView.classList.add('hidden');
+        calendarView.classList.add('hidden');
+        
+        // 隐藏任务过滤器和排序
+        document.getElementById('task-filters').classList.add('hidden');
+        document.getElementById('task-sort-container').classList.add('hidden');
+        
+        // 渲染统计
+        console.log('切换到统计视图，调用renderStatistics');
+        renderStatistics();
     }
 }
 
@@ -968,46 +989,42 @@ function setupKeyboardShortcuts() {
     });
 }
 
-// 初始化应用
-initApp();
-
-// 设置键盘快捷键
-setupKeyboardShortcuts();
-
 // 渲染统计视图
 function renderStatistics() {
-    const tasks = loadTasks();
+    console.log('renderStatistics函数被调用');
+    const currentTasks = loadTasks();
+    console.log('总任务数:', currentTasks.length);
     
     // 计算统计数据
-    const totalTasks = tasks.length;
-    const completedTasks = tasks.filter(task => task.completed).length;
+    const totalTasks = currentTasks.length;
+    const completedTasks = currentTasks.filter(task => task.completed).length;
     const pendingTasks = totalTasks - completedTasks;
     const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
     
     // 按优先级统计
     const priorityStats = {
-        high: tasks.filter(task => task.priority === 'high').length,
-        medium: tasks.filter(task => task.priority === 'medium').length,
-        low: tasks.filter(task => task.priority === 'low').length
+        high: currentTasks.filter(task => task.priority === 'high').length,
+        medium: currentTasks.filter(task => task.priority === 'medium').length,
+        low: currentTasks.filter(task => task.priority === 'low').length
     };
     
     // 更新统计视图
-    document.getElementById('total-tasks-count').textContent = totalTasks;
-    document.getElementById('completed-tasks-count').textContent = completedTasks;
-    document.getElementById('pending-tasks-count').textContent = pendingTasks;
-    document.getElementById('completion-rate').textContent = `${completionRate}%`;
+    document.getElementById('stats-total-tasks').textContent = totalTasks;
+    document.getElementById('stats-completed-tasks').textContent = completedTasks;
+    document.getElementById('stats-pending-tasks').textContent = pendingTasks;
+    document.getElementById('stats-completion-rate').textContent = `${completionRate}%`;
     
     // 更新优先级分布
-    document.getElementById('high-priority-count').textContent = priorityStats.high;
-    document.getElementById('medium-priority-count').textContent = priorityStats.medium;
-    document.getElementById('low-priority-count').textContent = priorityStats.low;
+    document.getElementById('stats-high-priority').textContent = priorityStats.high;
+    document.getElementById('stats-medium-priority').textContent = priorityStats.medium;
+    document.getElementById('stats-low-priority').textContent = priorityStats.low;
     
     // 更新进度条
     const completionBar = document.getElementById('completion-bar');
     completionBar.style.width = `${completionRate}%`;
     
     // 渲染最近活动（最近7天创建的任务）
-    const recentActivityList = document.getElementById('recent-activity-list');
+    const recentActivityList = document.getElementById('recent-activities');
     recentActivityList.innerHTML = '';
     
     const sevenDaysAgo = new Date();
@@ -1051,3 +1068,9 @@ function renderStatistics() {
         });
     }
 }
+
+// 初始化应用
+initApp();
+
+// 设置键盘快捷键
+setupKeyboardShortcuts();

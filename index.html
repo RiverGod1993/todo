@@ -164,7 +164,7 @@
         </div>
 
         <!-- 列表视图 -->
-        <section id="list-view" class="mb-6 hidden">
+        <section id="list-view" class="mb-6">
             <div class="bg-white rounded-xl shadow-sm overflow-hidden">
                 <div class="p-4 border-b border-gray-100 flex justify-between items-center">
                     <h3 class="font-medium">我的任务</h3>
@@ -209,7 +209,7 @@
         </section>
 
         <!-- 日历视图 -->
-        <section id="calendar-view" class="mb-6">
+        <section id="calendar-view" class="mb-6 hidden">
             <div class="bg-white rounded-xl shadow-sm overflow-hidden">
                 <!-- 日历头部 -->
                 <div class="p-4 border-b border-gray-100 flex justify-between items-center">
@@ -295,7 +295,10 @@
                                 <i class="fa fa-percent text-purple-600 text-xl"></i>
                             </div>
                             <h4 class="text-2xl font-bold text-purple-800 mb-1"><span id="stats-completion-rate">0</span>%</h4>
-                            <p class="text-sm text-purple-600">完成率</p>
+                            <div class="w-full bg-purple-100 rounded-full h-2 mt-2">
+                                <div id="completion-bar" class="bg-purple-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                            <p class="text-sm text-purple-600 mt-2">完成率</p>
                         </div>
                     </div>
                     
@@ -423,5 +426,7 @@
 
     <!-- JavaScript -->
     <script src="script.js"></script>
+    <script src="test-list-view.js"></script>
+    <script src="test-calendar.js"></script>
 </body>
 </html>
