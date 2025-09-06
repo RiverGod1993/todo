@@ -4,6 +4,7 @@
 const addTaskForm = document.getElementById('add-task-form');
 const newTaskInput = document.getElementById('new-task-input');
 const taskPriority = document.getElementById('task-priority');
+const taskDueDate = document.getElementById('task-due-date');
 const tasksContainer = document.getElementById('tasks-container');
 const emptyState = document.getElementById('empty-state');
 const tasksFooter = document.getElementById('tasks-footer');
@@ -19,9 +20,11 @@ const quickAddBtn = document.getElementById('quick-add-btn');
 // 视图相关元素
 const listView = document.getElementById('list-view');
 const calendarView = document.getElementById('calendar-view');
+const statisticsView = document.getElementById('statistics-view');
 const listViewBtn = document.getElementById('list-view-btn');
 const calendarViewBtn = document.getElementById('calendar-view-btn');
 const calendarViewBtnSecondary = document.getElementById('calendar-view-btn-secondary');
+const statisticsBtn = document.getElementById('statistics-btn');
 
 // 日历相关元素
 const calendarGrid = document.getElementById('calendar-grid');
@@ -46,7 +49,7 @@ let tasks = [];
 let currentFilter = 'all';
 let currentSearchTerm = '';
 let currentSortBy = 'date-desc';
-let currentView = 'list'; // 'list' 或 'calendar'
+let currentView = 'calendar'; // 'list' 或 'calendar'
 let currentCalendarDate = new Date();
 
 // 初始化应用
@@ -108,6 +111,14 @@ function initApp() {
     // 添加事件监听器
     addEventListeners();
     
+    // 手动设置日历视图按钮的激活状态
+    calendarViewBtn.classList.add('text-primary', 'font-medium');
+    calendarViewBtn.classList.remove('text-gray-600');
+    calendarViewBtnSecondary.classList.add('text-primary', 'font-medium');
+    calendarViewBtnSecondary.classList.remove('text-gray-600');
+    listViewBtn.classList.add('text-gray-600');
+    listViewBtn.classList.remove('text-primary', 'font-medium');
+    
     // 渲染当前视图
     renderCurrentView();
 }
@@ -165,7 +176,14 @@ function addEventListeners() {
     
     // 快速添加按钮
     quickAddBtn.addEventListener('click', () => {
-        newTaskInput.focus();
+        const taskText = newTaskInput.value.trim();
+        if (taskText) {
+            // 如果输入框有内容，直接添加任务
+            addTaskForm.dispatchEvent(new Event('submit'));
+        } else {
+            // 如果输入框为空，聚焦到输入框
+            newTaskInput.focus();
+        }
     });
     
     // 编辑模态框事件
@@ -189,6 +207,7 @@ function addEventListeners() {
     listViewBtn.addEventListener('click', () => switchView('list'));
     calendarViewBtn.addEventListener('click', () => switchView('calendar'));
     calendarViewBtnSecondary.addEventListener('click', () => switchView('calendar'));
+    statisticsBtn.addEventListener('click', () => switchView('statistics'));
     
     // 日历导航按钮
     prevMonthBtn.addEventListener('click', goToPreviousMonth);
@@ -201,6 +220,7 @@ function handleAddTask(e) {
     
     const taskText = newTaskInput.value.trim();
     const priority = taskPriority.value;
+    const dueDate = taskDueDate.value;
     
     if (taskText) {
         const newTask = {
@@ -209,7 +229,7 @@ function handleAddTask(e) {
             completed: false,
             priority: priority,
             createdAt: new Date().toISOString(),
-            dueDate: null
+            dueDate: dueDate ? new Date(dueDate).toISOString() : null
         };
         
         tasks.push(newTask);
@@ -219,6 +239,7 @@ function handleAddTask(e) {
         // 重置表单
         newTaskInput.value = '';
         taskPriority.value = 'medium';
+        taskDueDate.value = '';
         newTaskInput.focus();
         
         // 添加成功动画
@@ -232,38 +253,65 @@ function switchView(view) {
     
     // 更新视图按钮状态
     if (view === 'list') {
-        listViewBtn.classList.add('bg-primary', 'text-white');
-        listViewBtn.classList.remove('bg-gray-200', 'text-gray-700');
-        calendarViewBtn.classList.add('bg-gray-200', 'text-gray-700');
-        calendarViewBtn.classList.remove('bg-primary', 'text-white');
-        calendarViewBtnSecondary.classList.add('bg-gray-200', 'text-gray-700');
-        calendarViewBtnSecondary.classList.remove('bg-primary', 'text-white');
+        listViewBtn.classList.add('text-primary', 'font-medium');
+        listViewBtn.classList.remove('text-gray-600');
+        calendarViewBtn.classList.add('text-gray-600');
+        calendarViewBtn.classList.remove('text-primary', 'font-medium');
+        calendarViewBtnSecondary.classList.add('text-gray-600');
+        calendarViewBtnSecondary.classList.remove('text-primary', 'font-medium');
+        statisticsBtn.classList.add('text-gray-600');
+        statisticsBtn.classList.remove('text-primary', 'font-medium');
         
-        // 显示列表视图，隐藏日历视图
+        // 显示列表视图，隐藏其他视图
         listView.classList.remove('hidden');
         calendarView.classList.add('hidden');
+        statisticsView.classList.add('hidden');
         
         // 显示任务过滤器和排序
         document.getElementById('task-filters').classList.remove('hidden');
         document.getElementById('task-sort-container').classList.remove('hidden');
-    } else {
-        calendarViewBtn.classList.add('bg-primary', 'text-white');
-        calendarViewBtn.classList.remove('bg-gray-200', 'text-gray-700');
-        calendarViewBtnSecondary.classList.add('bg-primary', 'text-white');
-        calendarViewBtnSecondary.classList.remove('bg-gray-200', 'text-gray-700');
-        listViewBtn.classList.add('bg-gray-200', 'text-gray-700');
-        listViewBtn.classList.remove('bg-primary', 'text-white');
+    } else if (view === 'calendar') {
+        calendarViewBtn.classList.add('text-primary', 'font-medium');
+        calendarViewBtn.classList.remove('text-gray-600');
+        calendarViewBtnSecondary.classList.add('text-primary', 'font-medium');
+        calendarViewBtnSecondary.classList.remove('text-gray-600');
+        listViewBtn.classList.add('text-gray-600');
+        listViewBtn.classList.remove('text-primary', 'font-medium');
+        statisticsBtn.classList.add('text-gray-600');
+        statisticsBtn.classList.remove('text-primary', 'font-medium');
         
-        // 显示日历视图，隐藏列表视图
+        // 显示日历视图，隐藏其他视图
         calendarView.classList.remove('hidden');
         listView.classList.add('hidden');
+        statisticsView.classList.add('hidden');
         
         // 隐藏任务过滤器和排序
-        document.getElementById('task-filters').classList.add('hidden');
-        document.getElementById('task-sort-container').classList.add('hidden');
+        document.getElementById('task-filters').classlist.add('hidden');
+        document.getElementById('task-sort-container').classlist.add('hidden');
         
         // 渲染日历
         renderCalendar();
+    } else if (view === 'statistics') {
+        statisticsBtn.classList.add('text-primary', 'font-medium');
+        statisticsBtn.classList.remove('text-gray-600');
+        listViewBtn.classList.add('text-gray-600');
+        listViewBtn.classList.remove('text-primary', 'font-medium');
+        calendarViewBtn.classList.add('text-gray-600');
+        calendarViewBtn.classList.remove('text-primary', 'font-medium');
+        calendarViewBtnSecondary.classList.add('text-gray-600');
+        calendarViewBtnSecondary.classList.remove('text-primary', 'font-medium');
+        
+        // 显示统计视图，隐藏其他视图
+        statisticsView.classList.remove('hidden');
+        listView.classList.add('hidden');
+        calendarView.classList.add('hidden');
+        
+        // 隐藏任务过滤器和排序
+        document.getElementById('task-filters').classlist.add('hidden');
+        document.getElementById('task-sort-container').classlist.add('hidden');
+        
+        // 渲染统计
+        renderStatistics();
     }
 }
 
@@ -271,8 +319,10 @@ function switchView(view) {
 function renderCurrentView() {
     if (currentView === 'list') {
         renderTasks();
-    } else {
+    } else if (currentView === 'calendar') {
         renderCalendar();
+    } else if (currentView === 'statistics') {
+        renderStatistics();
     }
 }
 
@@ -520,14 +570,7 @@ function renderCalendar() {
     const prevLastDay = new Date(year, month, 0);
     const prevDaysInMonth = prevLastDay.getDate();
     
-    // 创建星期标题
-    const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
-    weekdays.forEach(day => {
-        const weekdayElement = document.createElement('div');
-        weekdayElement.className = 'text-center font-medium p-2 text-gray-500';
-        weekdayElement.textContent = day;
-        calendarGrid.appendChild(weekdayElement);
-    });
+
     
     // 渲染上个月的剩余天数
     for (let i = firstDayIndex; i > 0; i--) {
@@ -918,3 +961,81 @@ initApp();
 
 // 设置键盘快捷键
 setupKeyboardShortcuts();
+
+// 渲染统计视图
+function renderStatistics() {
+    const tasks = loadTasks();
+    
+    // 计算统计数据
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter(task => task.completed).length;
+    const pendingTasks = totalTasks - completedTasks;
+    const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    
+    // 按优先级统计
+    const priorityStats = {
+        high: tasks.filter(task => task.priority === 'high').length,
+        medium: tasks.filter(task => task.priority === 'medium').length,
+        low: tasks.filter(task => task.priority === 'low').length
+    };
+    
+    // 更新统计视图
+    document.getElementById('total-tasks-count').textContent = totalTasks;
+    document.getElementById('completed-tasks-count').textContent = completedTasks;
+    document.getElementById('pending-tasks-count').textContent = pendingTasks;
+    document.getElementById('completion-rate').textContent = `${completionRate}%`;
+    
+    // 更新优先级分布
+    document.getElementById('high-priority-count').textContent = priorityStats.high;
+    document.getElementById('medium-priority-count').textContent = priorityStats.medium;
+    document.getElementById('low-priority-count').textContent = priorityStats.low;
+    
+    // 更新进度条
+    const completionBar = document.getElementById('completion-bar');
+    completionBar.style.width = `${completionRate}%`;
+    
+    // 渲染最近活动（最近7天创建的任务）
+    const recentActivityList = document.getElementById('recent-activity-list');
+    recentActivityList.innerHTML = '';
+    
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const recentTasks = tasks
+        .filter(task => new Date(task.createdAt) >= sevenDaysAgo)
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 5);
+    
+    if (recentTasks.length === 0) {
+        recentActivityList.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+                <i class="fa fa-inbox text-3xl mb-2"></i>
+                <p>最近7天没有活动</p>
+            </div>
+        `;
+    } else {
+        recentTasks.forEach(task => {
+            const createdAt = new Date(task.createdAt);
+            const formattedDate = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}-${String(createdAt.getDate()).padStart(2, '0')}`;
+            const formattedTime = `${String(createdAt.getHours()).padStart(2, '0')}:${String(createdAt.getMinutes()).padStart(2, '0')}`;
+            
+            const activityItem = document.createElement('div');
+            activityItem.className = 'flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors';
+            activityItem.innerHTML = `
+                <div class="w-8 h-8 rounded-full flex items-center justify-center ${
+                    task.completed ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'
+                }">
+                    <i class="fa ${task.completed ? 'fa-check' : 'fa-plus'} text-xs"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-800 truncate">${escapeHTML(task.text)}</p>
+                    <p class="text-xs text-gray-500">${formattedDate} ${formattedTime}</p>
+                </div>
+                <span class="text-xs px-2 py-1 rounded-full ${getPriorityClass(task.priority)}">
+                    ${getPriorityText(task.priority)}
+                </span>
+            `;
+            recentActivityList.appendChild(activityItem);
+        });
+    }
+}
